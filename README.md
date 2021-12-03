@@ -2,7 +2,7 @@
 Этот пример — сплошное нарушение основных правил программирования Android-приложений. 
 
 Во-первых, 
-здесь используется [https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel](AndroidViewModel (AVM)).
+здесь используется [AndroidViewModel (AVM)](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel).
 
 Не стоит хранить контекст приложения в модели. Вообще, ничего от приложения не должно пребывать внутри модели. Но соблазн
 запихать в модель сохранение данных выше всяких предосторожностей.
