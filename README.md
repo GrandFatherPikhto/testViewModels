@@ -11,26 +11,25 @@
 ## Почему это плохо?
 Этот пример — сплошное нарушение основных правил [архитектуры](https://developer.android.com/jetpack/guide) Android-приложений. 
 
-Во-первых, 
-здесь используется [`AndroidViewModel` (AVM)](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel).
-
-Не стоит хранить контекст приложения в модели. Вообще, ничего от приложения не должно пребывать внутри модели. Но соблазн
-запихать в модель сохранение данных выше всяких предосторожностей.
-
-Наличие статического экземпляра контекста - зло, поскольку оно может вызвать
-утечку памяти. Однако наличие статического экземпляра приложения - это не так плохо, как может показаться, 
-потому что в запущенном приложении есть только один экземпляр приложения, а значит «всё под контролем»
-Следовательно, использование и наличие экземпляра Application в определенном классе в целом не является 
-проблемой. 
+Поскольку используется [`AndroidViewModel` (AVM)](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel).
 
 Первая проблема — Если экземпляр приложения ссылается на них, это проблема из-за проблемы цикла ссылок.
 
 Вторая проблема — тестирование приложения. В обычном модульном тесте сложно создать контекст приложения.
 
-## Основные моменты
-1. Для получения контекста приложения в Fragment, используем `requireActivity().application`.
+Так, что не стоит хранить контекст приложения в модели. 
+Вообще, ничего от приложения не должно пребывать внутри модели. Увы, соблазн
+запихать в модель сохранение данных выше всяких предосторожностей.
 
-2. Значения параметра `regime` сохраняются в `SharedPreferences`. Обратите внимание, что `SharedPreferences` теперь получаются при помощи библиотеки `androidx` в виде «ленивого» значения:
+Наличие статического экземпляра контекста - зло, поскольку оно может вызвать
+утечку памяти. 
+Однако наличие статического экземпляра приложения - это не так плохо, как может показаться, 
+потому что в запущенном приложении есть только один экземпляр приложения, а значит «всё под контролем»
+Следовательно, использование и наличие экземпляра Application в определенном классе в целом не является 
+проблемой. 
+
+## Основные моменты
+1. Значения параметра `regime` сохраняются в `SharedPreferences`. Обратите внимание, что `SharedPreferences` теперь получаются при помощи библиотеки `androidx` в виде «ленивого» значения:
 ```kotlin
     private val preferences: SharedPreferences by lazy {
         Log.d(TAG, "Application: ${getApplication<Application>()}")
@@ -55,7 +54,9 @@ class TestViewModelFactory(private val name:String): ViewModelProvider.NewInstan
 }
 ```
 
-Для `AndroidViewModel` дополнительный параметр, также, `name`:
+3. Фабрика [`TestAndroidViewModelFactory.kt`](./app/src/main/java/com/grandfatherpikhto/testviewmodels/TestAndroidViewModelFactory.kt), 
+   наследованная [`AndroidViewModel`](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel) 
+   принимает дополнительный параметр, `name` --- имя для сохранения уникальных данных для каждого фрагмента:
 ```kotlin
 class TestAndroidViewModelFactory(private val application: Application, private val name:String): ViewModelProvider.NewInstanceFactory() {
     companion object {
@@ -67,7 +68,18 @@ class TestAndroidViewModelFactory(private val application: Application, private 
     }
 }
 ```
-3. Модель создаётся при помощи `viewModels {...}`:
+
+4. Для простейшего случая, когда модель наследуется от [`ViewModel`](https://developer.android.com/topic/libraries/architecture/viewmodel),
+   код создания модели будет выглядеть так:
+
+```kotlin
+    private val testViewModel:TestAndroidViewModel by viewModels<TestAndroidViewModel> {
+        TestViewModelFactory("First")
+    }
+```
+
+4. Модель создаётся при помощи `viewModels {...}`. Контекст приложения получается при помощи 
+   `requireActivity().application`:
 ```kotlin
     private val testViewModel:TestAndroidViewModel by viewModels<TestAndroidViewModel> {
         TestAndroidViewModelFactory(requireActivity().application, "First")
