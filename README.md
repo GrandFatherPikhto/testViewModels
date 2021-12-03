@@ -2,7 +2,7 @@
 Этот пример — сплошное нарушение основных правил программирования Android-приложений. 
 
 Во-первых, 
-здесь используется [AndroidViewModel (AVM)](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel).
+здесь используется [`AndroidViewModel` (AVM)](https://developer.android.com/reference/androidx/lifecycle/AndroidViewModel).
 
 Не стоит хранить контекст приложения в модели. Вообще, ничего от приложения не должно пребывать внутри модели. Но соблазн
 запихать в модель сохранение данных выше всяких предосторожностей.
@@ -17,8 +17,20 @@
 
 ## Основные моменты
 1. Для получения контекста приложения в Fragment, используем `requireActivity().application`.
+
+2. Значения параметра `regime` сохраняются в `SharedPreferences`. Обратите внимание, что `SharedPreferences` теперь получаются при помощи библиотеки `androidx` в виде «ленивого» значения:
+```kotlin
+    private val preferences: SharedPreferences by lazy {
+        Log.d(TAG, "Application: ${getApplication<Application>()}")
+        PreferenceManager.getDefaultSharedPreferences(getApplication())
+    }
+```   
+Старый метод получения _устарел_  
+
 2. Фабрика моделей используется в своём простейшем «изводе»
-Для `ViewModel` дополнительный параметр — name. Название для сохранения в `SharedPreferences` уникального значения
+Для `ViewModel` дополнительный параметр — name. Название для сохранения в 
+[`SharedPreferences`](https://developer.android.com/reference/android/content/SharedPreferences) уникального значения.
+
 ```kotlin
 class TestViewModelFactory(private val name:String): ViewModelProvider.NewInstanceFactory() {
     companion object {
@@ -70,8 +82,8 @@ class TestAndroidViewModelFactory(private val application: Application, private 
 Чтобы эти методы вызывались при завершении приложения, необходимо явно вызывать `finish()`. Всё, что у нас
 есть из срабатывающего всегда --- это `onStart()`, `onStop()`, `onPause()`, `onResume()`.
 
-В этом примере будем использовать `onStop()` в (./app/src/main/java/com/grandfatherpikhto/testviewmodels/FirstFragment.kt)[`FirstFragment.kt`], 
-(./app/src/main/java/com/grandfatherpikhto/testviewmodels/SecondFragment.kt)[`SecondFragment.kt`]:
+В этом примере будем использовать `onStop()` в [`FirstFragment.kt`](./app/src/main/java/com/grandfatherpikhto/testviewmodels/FirstFragment.kt),
+[`SecondFragment.kt`](./app/src/main/java/com/grandfatherpikhto/testviewmodels/SecondFragment.kt):
 ```kotlin
     override fun onStop() {
         super.onStop()
@@ -81,7 +93,10 @@ class TestAndroidViewModelFactory(private val application: Application, private 
 ```
 
 Собственно, почти всё. 
-Осталось инициализировать `Number Wheel Picker` в классе фрагмента (`FirstFragment.kt`, `SecondFragment.kt`):
+Осталось инициализировать `Number Wheel Picker` в классе фрагмента (
+[`FirstFragment.kt`](./app/src/main/java/com/grandfatherpikhto/testviewmodels/FirstFragment.kt),
+[`SecondFragment.kt`](./app/src/main/java/com/grandfatherpikhto/testviewmodels/SecondFragment.kt)
+):
 
 ```kotlin
         binding.apply {
@@ -111,3 +126,93 @@ class TestAndroidViewModelFactory(private val application: Application, private 
 Важный момент: при присваивании данных обязательна проверка неравенства между данными модели
 и данными `Wheel Picker`. Если этого не сделать, возникнет закольцованный вызов между данными
 модели и данными пикера.
+
+## Без ответа
+Стоит подгрузить полный набор библиотек `compose` 
+```kotlin
+    implementation 'androidx.compose.ui:ui:1.0.5'
+
+    // Tooling support (Previews, etc.)
+    implementation("androidx.compose.ui:ui-tooling:1.0.5")
+    // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
+    implementation("androidx.compose.foundation:foundation:1.0.5")
+    // Material Design
+    implementation("androidx.compose.material:material:1.0.5")
+    // Material design icons
+    implementation("androidx.compose.material:material-icons-core:1.0.5")
+    implementation("androidx.compose.material:material-icons-extended:1.0.5")
+    // Integration with observables
+    implementation("androidx.compose.runtime:runtime-livedata:1.0.5")
+    implementation("androidx.compose.runtime:runtime-rxjava2:1.0.5")
+    implementation "androidx.compose.runtime:runtime:1.0.5"
+```
+
+, как начинает вылезать ошибка 
+<details>
+    <summary>Посмотреть</summary>
+
+```kotlin
+E/AndroidRuntime: FATAL EXCEPTION: main
+    Process: com.grandfatherpikhto.testpreferences, PID: 29523
+    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.grandfatherpikhto.testpreferences/com.grandfatherpikhto.testpreferences.MainActivity}: android.view.InflateException: Binary XML file line #23 in com.grandfatherpikhto.testpreferences:layout/activity_main: Binary XML file line #18 in com.grandfatherpikhto.testpreferences:layout/content_main: Error inflating class fragment
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3782)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3961)
+        at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:91)
+        at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+        at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:103)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2386)
+        at android.os.Handler.dispatchMessage(Handler.java:107)
+        at android.os.Looper.loop(Looper.java:213)
+        at android.app.ActivityThread.main(ActivityThread.java:8178)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:513)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1101)
+     Caused by: android.view.InflateException: Binary XML file line #23 in com.grandfatherpikhto.testpreferences:layout/activity_main: Binary XML file line #18 in com.grandfatherpikhto.testpreferences:layout/content_main: Error inflating class fragment
+     Caused by: android.view.InflateException: Binary XML file line #18 in com.grandfatherpikhto.testpreferences:layout/content_main: Error inflating class fragment
+     Caused by: java.lang.ClassCastException: com.grandfatherpikhto.testpreferences.databinding.FragmentFirstBinding cannot be cast to androidx.lifecycle.ViewModelStoreOwner
+        at com.grandfatherpikhto.testpreferences.FirstFragment.onViewCreated(FirstFragment.kt:74)
+        at androidx.fragment.app.Fragment.performViewCreated(Fragment.java:2987)
+        at androidx.fragment.app.FragmentStateManager.createView(FragmentStateManager.java:546)
+        at androidx.fragment.app.FragmentStateManager.moveToExpectedState(FragmentStateManager.java:282)
+        at androidx.fragment.app.FragmentStore.moveToExpectedState(FragmentStore.java:112)
+        at androidx.fragment.app.FragmentManager.moveToState(FragmentManager.java:1647)
+        at androidx.fragment.app.FragmentManager.dispatchStateChange(FragmentManager.java:3128)
+        at androidx.fragment.app.FragmentManager.dispatchViewCreated(FragmentManager.java:3065)
+        at androidx.fragment.app.Fragment.performViewCreated(Fragment.java:2988)
+        at androidx.fragment.app.FragmentStateManager.ensureInflatedView(FragmentStateManager.java:392)
+        at androidx.fragment.app.FragmentStateManager.moveToExpectedState(FragmentStateManager.java:281)
+        at androidx.fragment.app.FragmentLayoutInflaterFactory.onCreateView(FragmentLayoutInflaterFactory.java:140)
+        at androidx.fragment.app.FragmentController.onCreateView(FragmentController.java:135)
+        at androidx.fragment.app.FragmentActivity.dispatchFragmentsOnCreateView(FragmentActivity.java:319)
+        at androidx.fragment.app.FragmentActivity.onCreateView(FragmentActivity.java:298)
+        at android.view.LayoutInflater.tryCreateView(LayoutInflater.java:1079)
+        at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:1007)
+        at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:971)
+        at android.view.LayoutInflater.rInflate(LayoutInflater.java:1133)
+        at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1094)
+        at android.view.LayoutInflater.parseInclude(LayoutInflater.java:1273)
+        at android.view.LayoutInflater.rInflate(LayoutInflater.java:1129)
+        at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1094)
+        at android.view.LayoutInflater.inflate(LayoutInflater.java:692)
+        at android.view.LayoutInflater.inflate(LayoutInflater.java:536)
+E/AndroidRuntime:     at com.grandfatherpikhto.testpreferences.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:50)
+        at com.grandfatherpikhto.testpreferences.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:44)
+        at com.grandfatherpikhto.testpreferences.MainActivity.onCreate(MainActivity.kt:22)
+        at android.app.Activity.performCreate(Activity.java:8086)
+        at android.app.Activity.performCreate(Activity.java:8074)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1313)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3755)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3961)
+        at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:91)
+        at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+        at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:103)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2386)
+        at android.os.Handler.dispatchMessage(Handler.java:107)
+        at android.os.Looper.loop(Looper.java:213)
+        at android.app.ActivityThread.main(ActivityThread.java:8178)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:513)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1101)
+I/Process: Sending signal. PID: 29523 SIG: 9
+```
+</details>
