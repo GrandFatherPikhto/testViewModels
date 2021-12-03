@@ -70,7 +70,8 @@ class TestAndroidViewModelFactory(private val application: Application, private 
 Чтобы эти методы вызывались при завершении приложения, необходимо явно вызывать `finish()`. Всё, что у нас
 есть из срабатывающего всегда --- это `onStart()`, `onStop()`, `onPause()`, `onResume()`.
 
-В этом примере будем использовать `onStop()` в [./app/src/main/java/com/grandfatherpikhto/testviewmodels/FirstFragment.kt](`FirstFragment.kt`), [./app/src/main/java/com/grandfatherpikhto/testviewmodels/SecondFragment.kt](`SecondFragment.kt`):
+В этом примере будем использовать `onStop()` в (./app/src/main/java/com/grandfatherpikhto/testviewmodels/FirstFragment.kt)[`FirstFragment.kt`], 
+(./app/src/main/java/com/grandfatherpikhto/testviewmodels/SecondFragment.kt)[`SecondFragment.kt`]:
 ```kotlin
     override fun onStop() {
         super.onStop()
