@@ -10,6 +10,30 @@
 проблемой. Но если экземпляр приложения ссылается на них, это проблема из-за проблемы цикла ссылок.
 Вторая проблема — тестирование приложения. В обычном модульном тесте сложно создать контекст приложения.
 ## Основные участки
-Для получения контекста приложения в Fragment, используем `requireActivity().application`.
+1. Для получения контекста приложения в Fragment, используем `requireActivity().application`.
+2. Фабрика моделей используется в своём простейшем «изводе»
+Для `ViewModel` дополнительный параметр — name. Название для сохранения в `SharedPreferences` уникального значения
+```kotlin
+class TestViewModelFactory(private val name:String): ViewModelProvider.NewInstanceFactory() {
+    companion object {
+        const val TAG:String = "TestViewModelFactory"
+    }
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        Log.d(TAG, "$name")
+        return TestViewModel(name) as T
+    }
+}
+```
 
-
+Для `AndroidViewModel` дополнительный параметр, также, `name`:
+```kotlin
+class TestAndroidViewModelFactory(private val application: Application, private val name:String): ViewModelProvider.NewInstanceFactory() {
+    companion object {
+        const val TAG:String = "TestAndroidViewModelFactory"
+    }
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        Log.d(TAG, "Create model instance: $name")
+        return TestAndroidViewModel(application, name) as T
+    }
+}
+```
